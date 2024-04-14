@@ -43,33 +43,6 @@ body:
   - type: markdown
     attributes:
       value: >-
-        ## Sharing your `latest.log`
-
-        In order to diagnose a bug, we will need to see your `latest.log`.  
-
-        To share your `latest.log` here, please follow these steps:
-
-
-        1. If you don't have it already, find your `latest.log` file.  
-
-        a. [Find your minecraft
-        folder](https://stickypiston.co/account/knowledgebase/130/How-do-I-find-my-Minecraft-Folder.html)   
-
-        b. In the minecraft folder, go into the `logs` folder and find the
-        `latest.log` file.
-
-        1. Create a Pastebin from the `latest.log`, and copy the url.
-  - type: input
-    id: crashlog
-    attributes:
-      label: latest.log
-      description: Please paste the url to the gist containing your `latest.log` file.
-      placeholder: https://pastebin.com/<your_pastebin_id>
-    validations:
-      required: true
-  - type: markdown
-    attributes:
-      value: >-
         ## Sharing your Crash Report
         
         In order to diagnose a crash, we will need to see your client crash
