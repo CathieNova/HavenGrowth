@@ -1,7 +1,10 @@
 package net.cathienova.havengrowth;
 
+import net.cathienova.havengrowth.config.CommonConfig;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.TagKey;
@@ -16,14 +19,11 @@ import net.minecraft.world.level.block.CropBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraftforge.event.TickEvent.PlayerTickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.event.TickEvent;
 
 import java.util.*;
-
-import static net.cathienova.havengrowth.config.HavenGrowthConfig.*;
 
 @Mod.EventBusSubscriber(modid = HavenGrowth.MODID)
 public class HavenGrowthEvent
@@ -32,9 +32,9 @@ public class HavenGrowthEvent
     private static final Map<UUID, Boolean> prevSneaking = new HashMap<>();
 
     @SubscribeEvent
-    public static void onPlayerTick(PlayerTickEvent event)
+    public static void onPlayerTick(TickEvent.PlayerTickEvent event)
     {
-        if (event.phase == PlayerTickEvent.Phase.START)
+        if (event.phase == TickEvent.PlayerTickEvent.Phase.START)
         {
             Player player = event.player;
             UUID uuid = player.getUUID();
@@ -48,11 +48,11 @@ public class HavenGrowthEvent
     private static void handleMovementModes(Player player, UUID uuid) {
         // Check if the player is sprinting but not crouching
         if (player.isSprinting() && !player.isCrouching()) {
-            processPlantGrowth(player, sprintGrowChance);
+            processPlantGrowth(player, CommonConfig.CONFIG.sprintGrowthChance.get());
         }
         // Otherwise, check if the player has started twerking and is not sprinting
         else if (hasStartedCrouching(player, uuid) && !player.isSprinting()) {
-            processPlantGrowth(player, crouchGrowChance);
+            processPlantGrowth(player, CommonConfig.CONFIG.crouchGrowthChance.get());
         }
     }
 
@@ -74,7 +74,7 @@ public class HavenGrowthEvent
     private static void processPlantGrowth(Player player, double growthChance)
     {
         List<BlockPos> nearbyBlocks = findNearbyBlocks(player);
-        nearbyBlocks.forEach(pos -> growPlants(player.level, pos, growthChance, player));
+        nearbyBlocks.forEach(pos -> growPlants(player.level(), pos, growthChance, player));
     }
 
     private static List<BlockPos> findNearbyBlocks(Player player)
@@ -82,6 +82,7 @@ public class HavenGrowthEvent
         // Calculate blocks within a configurable distance around the player
         List<BlockPos> nearbyBlocks = new ArrayList<>();
         BlockPos playerPos = player.blockPosition();
+        int playerDistance = CommonConfig.CONFIG.playerDistance.get();
         for (int x = -playerDistance; x <= playerDistance; x++)
         {
             for (int y = -1; y <= 2; y++)
@@ -107,7 +108,7 @@ public class HavenGrowthEvent
         // Execute growth only if conditions defined in white/blacklist are met
         if (canGrow(blockState, growthChance, world, pos, player))
         {
-            if (showParticles) spawnGrowthParticles(world, pos);
+            if (CommonConfig.CONFIG.showParticles.get()) spawnGrowthParticles(world, pos);
         }
     }
 
@@ -124,11 +125,11 @@ public class HavenGrowthEvent
         {
             return false;
         }
-        if (useWhitelistOnly && isWhitelisted(state))
+        if (CommonConfig.CONFIG.useWhitelistOnly.get() && isWhitelisted(state))
         {
             return applyGrowth(world, state, pos, growthChance, player);
         }
-        else if (!useWhitelistOnly)
+        else if (!CommonConfig.CONFIG.useWhitelistOnly.get())
         {
             return applyGrowth(world, state, pos, growthChance, player);
         }
@@ -137,14 +138,14 @@ public class HavenGrowthEvent
 
     private static boolean isWhitelisted(BlockState state)
     {
-        String blockId = ForgeRegistries.BLOCKS.getKey(state.getBlock()).toString();
+        String blockId = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
         // Advanced tag handling in whitelist check
-        for (String id : whiteList)
+        for (String id : CommonConfig.CONFIG.whiteList.get())
         {
             if (id.startsWith("#"))
             {
                 String tagId = id.substring(1);
-                if (state.is(TagKey.create(Registry.BLOCK_REGISTRY, new ResourceLocation(tagId))))
+                if (state.is(TagKey.create(Registries.BLOCK, new ResourceLocation(tagId))))
                 {
                     return true;
                 }
@@ -159,14 +160,14 @@ public class HavenGrowthEvent
 
     private static boolean isBlacklisted(BlockState state)
     {
-        String blockId = ForgeRegistries.BLOCKS.getKey(state.getBlock()).toString();
+        String blockId = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
         // Advanced tag handling in blacklist check
-        for (String id : blackList)
+        for (String id : CommonConfig.CONFIG.blackList.get())
         {
             if (id.startsWith("#"))
             {
                 String tagId = id.substring(1);
-                if (state.is(TagKey.create(Registry.BLOCK_REGISTRY, new ResourceLocation(tagId))))
+                if (state.is(TagKey.create(Registries.BLOCK, new ResourceLocation(tagId))))
                 {
                     return true;
                 }
@@ -182,7 +183,7 @@ public class HavenGrowthEvent
     private static boolean applyGrowth(Level world, BlockState state, BlockPos pos, double chance, Player player) {
         // Determine the effective growth chance based on the block's mod origin, reason being Mystical Agriculture requires higher growth chance to grow
         double effectiveChance = chance;
-        String blockRegistryName = ForgeRegistries.BLOCKS.getKey(state.getBlock()).toString();
+        String blockRegistryName = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
 
         // If the block is from mysticalagriculture, modify the effective chance
         if (blockRegistryName.startsWith("mysticalagriculture:")) {
@@ -203,7 +204,7 @@ public class HavenGrowthEvent
 
     private static boolean growCrop(Level world, BlockPos pos, CropBlock crop, BlockState state)
     {
-        int age = state.getValue(crop.getAgeProperty());
+        int age = crop.getAge(state);
         if (age < crop.getMaxAge())
         {
             crop.growCrops(world, pos, state);

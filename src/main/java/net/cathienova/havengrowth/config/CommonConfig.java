@@ -1,24 +1,36 @@
 package net.cathienova.havengrowth.config;
 
-import net.minecraftforge.common.ForgeConfigSpec;
-
-import java.util.ArrayList;
+import net.neoforged.neoforge.common.ModConfigSpec;
+import org.apache.commons.lang3.tuple.Pair;
 import java.util.List;
 
-public class CommonConfig
-{
-    public final ForgeConfigSpec.BooleanValue showParticles;
-    public final ForgeConfigSpec.BooleanValue useWhitelistOnly;
-    public final ForgeConfigSpec.ConfigValue<List<String>> whiteList;
-    public final ForgeConfigSpec.ConfigValue<List<String>> blackList;
-    public final ForgeConfigSpec.BooleanValue onlySaplingsAndCrops;
-    public final ForgeConfigSpec.IntValue playerDistance;
-    public final ForgeConfigSpec.DoubleValue sprintGrowthChance;
-    public final ForgeConfigSpec.DoubleValue crouchGrowthChance;
+public class CommonConfig {
+    public static final Pair<CommonConfig, ModConfigSpec> SPEC_PAIR = new ModConfigSpec.Builder().configure(CommonConfig::new);
+    public static final CommonConfig CONFIG = SPEC_PAIR.getLeft();
+    public static final ModConfigSpec SPEC = SPEC_PAIR.getRight();
 
-    public CommonConfig(ForgeConfigSpec.Builder builder)
-    {
-        List<String> havenWhitelist = new ArrayList<>(List.of(
+    public final ModConfigSpec.ConfigValue<Boolean> showParticles;
+    public final ModConfigSpec.ConfigValue<Boolean> useWhitelistOnly;
+    public final ModConfigSpec.ConfigValue<List<String>> whiteList;
+    public final ModConfigSpec.ConfigValue<List<String>> blackList;
+    public final ModConfigSpec.ConfigValue<Boolean> onlySaplingsAndCrops;
+    public final ModConfigSpec.ConfigValue<Integer> playerDistance;
+    public final ModConfigSpec.ConfigValue<Double> sprintGrowthChance;
+    public final ModConfigSpec.ConfigValue<Double> crouchGrowthChance;
+
+    public CommonConfig(ModConfigSpec.Builder builder) {
+        showParticles = builder.comment("Enable growth particles").define("showParticles", true);
+        useWhitelistOnly = builder.comment("Use whitelist only. (will override blacklist and onlySaplingsAndCrops)").define("useWhitelistOnly", true);
+        whiteList = builder.comment("Whitelist of blocks that will grow.").define("whiteList", defaultWhitelist());
+        blackList = builder.comment("Blacklist of blocks that will not grow.").define("blackList", defaultBlacklist());
+        onlySaplingsAndCrops = builder.comment("Only grow sapling tags and crop tags. (blacklist can exclude these)").define("onlySaplingsAndCrops", true);
+        playerDistance = builder.comment("The distance from the player to check for growth in blocks. (N S E W)").defineInRange("playerDistance", 5, 1, 20);
+        sprintGrowthChance = builder.comment("The chance of growth applied by sprinting. (1 = 100%)").defineInRange("sprintGrowthChance", 0.075, 0, 1);
+        crouchGrowthChance = builder.comment("The chance of growth applied by crouching. (1 = 100%)").defineInRange("crouchGrowthChance", 0.15, 0, 1);
+    }
+
+    private static List<String> defaultWhitelist() {
+        return List.of(
                 "minecraft:wheat", "minecraft:beetroots", "minecraft:carrots", "minecraft:potatoes", "minecraft:melon_stem",
                 "minecraft:pumpkin_stem", "minecraft:bamboo_sapling", "minecraft:oak_sapling", "minecraft:spruce_sapling",
                 "minecraft:birch_sapling", "minecraft:jungle_sapling", "minecraft:acacia_sapling", "minecraft:dark_oak_sapling",
@@ -114,19 +126,12 @@ public class CommonConfig
                 "createcafe:cassava_crop",
 
                 "farmersdelight:cabbages", "farmersdelight:budding_tomatoes", "farmersdelight:onions"
-        ));
+        );
+    }
 
-        List<String> havenBlacklist = new ArrayList<>(List.of(
+    private static List<String> defaultBlacklist() {
+        return List.of(
                 "minecraft:grass_block", "minecraft:netherrack", "minecraft:grass_block", "minecraft:warped_nylium", "minecraft:crimson_nylium"
-    ));
-
-        showParticles = builder.comment("Enable growth particles").define("showParticles", true);
-        useWhitelistOnly = builder.comment("Use whitelist only. (will override blacklist and onlySaplingsAndCrops)").define("useWhitelistOnly", true);
-        whiteList = builder.comment("Whitelist of blocks that will grow.").define("whiteList", havenWhitelist);
-        blackList = builder.comment("Blacklist of blocks that will not grow.").define("blackList", havenBlacklist);
-        onlySaplingsAndCrops = builder.comment("Only grow sapling tags and crop tags. (blacklist can exclude these)").define("onlySaplingsAndCrops", true);
-        playerDistance = builder.comment("The distance from the player to check for growth in blocks. (N S E W)").defineInRange("playerDistance", 5, 1, 20);
-        sprintGrowthChance = builder.comment("The chance of growth applied by sprinting. (1 = 100%)").defineInRange("sprintGrowthChance", 0.075, 0, 1);
-        crouchGrowthChance = builder.comment("The chance of growth applied by crouching. (1 = 100%)").defineInRange("crouchGrowthChance", 0.15, 0, 1);
+        );
     }
 }

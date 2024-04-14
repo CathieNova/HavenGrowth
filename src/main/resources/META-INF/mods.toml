@@ -1,23 +1,20 @@
 modLoader="javafml"
-loaderVersion="[40,)"
-license="MIT"
+loaderVersion="${loader_version_range}"
+license="${mod_license}"
 [[mods]]
     modId="havengrowth"
-    version="${file.jarVersion}"
-    displayName="Haven Growth"
+    version="${mod_version}"
+    displayName="${mod_name}"
     logoFile="havengrowth_logo.png"
-    credits=""
-    authors="CathieNova"
-    description="Haven Growth is a mod that allows you to Crouch or Sprint to grow anything that can be Bone Mealed, excluding the blacklisted blocks."
+    authors="${mod_authors}"
+    description='''${mod_description}'''
 [[dependencies.havengrowth]]
-    modId="forge"
-    mandatory=true
-    versionRange="[40,)"
+    modId="neoforge"
+    versionRange="${neo_version_range}"
     ordering="NONE"
     side="BOTH"
 [[dependencies.havengrowth]]
     modId="minecraft"
-    mandatory=true
-    versionRange="[1.18.2,1.19)"
+    versionRange="${minecraft_version_range}"
     ordering="NONE"
     side="BOTH"
