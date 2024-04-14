@@ -17,7 +17,7 @@ apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'org.parchmentmc.librarian.forgegradle'
 
 
-version = mod_version + '-' + minecraft_version
+version = minecraft_version + '-' + mod_version
 group = 'net.cathienova.havengrowth'
 archivesBaseName = 'HavenGrowth'
 

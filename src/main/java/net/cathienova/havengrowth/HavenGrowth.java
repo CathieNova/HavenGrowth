@@ -42,25 +42,15 @@ public class HavenGrowth
         MinecraftForge.EVENT_BUS.register(this);
     }
 
-    private void commonSetup(final FMLCommonSetupEvent event)
-    {
-
-    }
+    private void commonSetup(final FMLCommonSetupEvent event){}
 
     @SubscribeEvent
-    public void onServerStarting(ServerStartingEvent event)
-    {
-
-    }
+    public void onServerStarting(ServerStartingEvent event){}
 
     @Mod.EventBusSubscriber(modid = MODID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
     public static class ClientModEvents
     {
         @SubscribeEvent
-        public static void onClientSetup(FMLClientSetupEvent event)
-        {
-
-        }
+        public static void onClientSetup(FMLClientSetupEvent event){}
     }
-
 }
