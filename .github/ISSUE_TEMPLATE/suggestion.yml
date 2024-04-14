@@ -1,0 +1,14 @@
+name: Suggestion
+description: >-
+  Please use this template when you want to suggest a feature for HavenGrowth.
+title: '[Suggestion]: '
+body:
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggestion
+      placeholder: >-
+        Example:  
+        Please add support for Botany Pots so i can do the twerky twerk with my plants.
+    validations:
+      required: true
