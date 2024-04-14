@@ -2,6 +2,7 @@ package net.cathienova.havengrowth;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Registry;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.TagKey;
@@ -74,7 +75,7 @@ public class HavenGrowthEvent
     private static void processPlantGrowth(Player player, double growthChance)
     {
         List<BlockPos> nearbyBlocks = findNearbyBlocks(player);
-        nearbyBlocks.forEach(pos -> growPlants(player.level, pos, growthChance, player));
+        nearbyBlocks.forEach(pos -> growPlants(player.level(), pos, growthChance, player));
     }
 
     private static List<BlockPos> findNearbyBlocks(Player player)
@@ -144,7 +145,7 @@ public class HavenGrowthEvent
             if (id.startsWith("#"))
             {
                 String tagId = id.substring(1);
-                if (state.is(TagKey.create(Registry.BLOCK_REGISTRY, new ResourceLocation(tagId))))
+                if (state.is(TagKey.create(Registries.BLOCK, new ResourceLocation(tagId))))
                 {
                     return true;
                 }
@@ -166,7 +167,7 @@ public class HavenGrowthEvent
             if (id.startsWith("#"))
             {
                 String tagId = id.substring(1);
-                if (state.is(TagKey.create(Registry.BLOCK_REGISTRY, new ResourceLocation(tagId))))
+                if (state.is(TagKey.create(Registries.BLOCK, new ResourceLocation(tagId))))
                 {
                     return true;
                 }
@@ -203,7 +204,7 @@ public class HavenGrowthEvent
 
     private static boolean growCrop(Level world, BlockPos pos, CropBlock crop, BlockState state)
     {
-        int age = state.getValue(crop.getAgeProperty());
+        int age = crop.getAge(state);
         if (age < crop.getMaxAge())
         {
             crop.growCrops(world, pos, state);
