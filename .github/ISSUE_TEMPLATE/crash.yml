@@ -66,7 +66,7 @@ body:
     attributes:
       label: Crash Report
       description: >-
-        Please paste the url to the gist containing your client crash report.
+        Please paste the url to the Pastebin containing your client crash report.
       placeholder: https://pastebin.com/<your_pastebin_id>
     validations:
       required: true
