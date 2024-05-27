@@ -82,13 +82,10 @@ body:
         b. In the minecraft folder, go into the `logs` folder and find the
         `latest.log` file.
 
-        1. Create a Gist from the `latest.log`, and copy the url.  
-
-        [Click here for instructions on creating a
-        Gist](https://gist.github.com/mezz/c3f0931344d81afd366e0d85a8ed1031)
+        1. Create a Pastebin from the client crash report file, and copy the url.
   - type: input
     id: crashlog
     attributes:
       label: latest.log
-      description: Please paste the url to the gist containing your `latest.log` file.
-      placeholder: https://gist.github.com/<your_user_name>/<gist_id>
+      description: Please paste the url to the Pastebin containing your `latest.log` file.
+      placeholder: https://pastebin.com/<your_pastebin_id>
