@@ -3,7 +3,7 @@ loaderVersion="[47,)"
 license="MIT"
 [[mods]]
     modId="havengrowth"
-    version="${file.jarVersion}"
+    version="${mod_version}"
     displayName="Haven Growth"
     logoFile="havengrowth_logo.png"
     credits=""
