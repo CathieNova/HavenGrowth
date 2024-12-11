@@ -10,11 +10,13 @@ license="${mod_license}"
     description='''${mod_description}'''
 [[dependencies.havengrowth]]
     modId="neoforge"
+    type="required"
     versionRange="${neo_version_range}"
     ordering="NONE"
     side="BOTH"
 [[dependencies.havengrowth]]
     modId="minecraft"
+    type="required"
     versionRange="${minecraft_version_range}"
     ordering="NONE"
     side="BOTH"

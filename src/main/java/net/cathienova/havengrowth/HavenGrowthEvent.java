@@ -19,21 +19,21 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.core.particles.ParticleTypes;
 import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.Mod;
-import net.neoforged.neoforge.event.TickEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
 import java.util.*;
 
-@Mod.EventBusSubscriber(modid = HavenGrowth.MODID)
+@EventBusSubscriber(modid = HavenGrowth.MODID)
 public class HavenGrowthEvent {
     // Maps to track player's crouching state
     private static final Map<UUID, Boolean> prevSneaking = new HashMap<>();
     private static final Map<UUID, Boolean> hasCrouched = new HashMap<>();
 
     @SubscribeEvent
-    public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-        if (event.phase == TickEvent.PlayerTickEvent.Phase.START) {
-            Player player = event.player;
+    public static void onPlayerTick(PlayerTickEvent.Post event) {
+        //if (event.phase == TickEvent.PlayerTickEvent.Phase.START) {
+            Player player = event.getEntity();
             UUID uuid = player.getUUID();
 
             // Initialize player states if absent
@@ -41,7 +41,7 @@ public class HavenGrowthEvent {
             hasCrouched.putIfAbsent(uuid, false);
 
             handleMovementModes(player, uuid);
-        }
+        //}
     }
 
     private static void handleMovementModes(Player player, UUID uuid) {
@@ -111,7 +111,7 @@ public class HavenGrowthEvent {
         String blockId = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
         for (String id : CommonConfig.CONFIG.whiteList.get()) {
             if (id.startsWith("#")) {
-                if (state.is(TagKey.create(Registries.BLOCK, new ResourceLocation(id.substring(1))))) {
+                if (state.is(TagKey.create(Registries.BLOCK, ResourceLocation.parse(id.substring(1))))) {
                     return true;
                 }
             } else if (id.equals(blockId)) {
@@ -125,7 +125,7 @@ public class HavenGrowthEvent {
         String blockId = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
         for (String id : CommonConfig.CONFIG.blackList.get()) {
             if (id.startsWith("#")) {
-                if (state.is(TagKey.create(Registries.BLOCK, new ResourceLocation(id.substring(1))))) {
+                if (state.is(TagKey.create(Registries.BLOCK, ResourceLocation.parse(id.substring(1))))) {
                     return true;
                 }
             } else if (id.equals(blockId)) {

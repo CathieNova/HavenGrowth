@@ -1,32 +1,41 @@
 package net.cathienova.havengrowth.config;
 
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.common.ModConfigSpec;
 import org.apache.commons.lang3.tuple.Pair;
+
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class CommonConfig {
     public static final Pair<CommonConfig, ModConfigSpec> SPEC_PAIR = new ModConfigSpec.Builder().configure(CommonConfig::new);
     public static final CommonConfig CONFIG = SPEC_PAIR.getLeft();
     public static final ModConfigSpec SPEC = SPEC_PAIR.getRight();
 
-    public final ModConfigSpec.ConfigValue<Boolean> showParticles;
-    public final ModConfigSpec.ConfigValue<Boolean> useWhitelistOnly;
-    public final ModConfigSpec.ConfigValue<List<String>> whiteList;
-    public final ModConfigSpec.ConfigValue<List<String>> blackList;
-    public final ModConfigSpec.ConfigValue<Boolean> onlySaplingsAndCrops;
-    public final ModConfigSpec.ConfigValue<Integer> playerDistance;
-    public final ModConfigSpec.ConfigValue<Double> sprintGrowthChance;
-    public final ModConfigSpec.ConfigValue<Double> crouchGrowthChance;
+    public final ModConfigSpec.BooleanValue showParticles;
+    public final ModConfigSpec.BooleanValue useWhitelistOnly;
+    public final ModConfigSpec.ConfigValue<List<? extends String>> whiteList;
+    public final ModConfigSpec.ConfigValue<List<? extends String>> blackList;
+    public final ModConfigSpec.BooleanValue onlySaplingsAndCrops;
+    public final ModConfigSpec.IntValue playerDistance;
+    public final ModConfigSpec.DoubleValue sprintGrowthChance;
+    public final ModConfigSpec.DoubleValue crouchGrowthChance;
+
+    public static Set<Block> validatedWhiteList;
+    public static Set<Block> validatedBlackList;
 
     public CommonConfig(ModConfigSpec.Builder builder) {
         showParticles = builder.comment("Enable growth particles").define("showParticles", true);
         useWhitelistOnly = builder.comment("Use whitelist only. (will override blacklist and onlySaplingsAndCrops)").define("useWhitelistOnly", true);
-        whiteList = builder.comment("Whitelist of blocks that will grow.").define("whiteList", defaultWhitelist());
-        blackList = builder.comment("Blacklist of blocks that will not grow.").define("blackList", defaultBlacklist());
+        whiteList = builder.comment("Whitelist of blocks that will grow.").defineListAllowEmpty("whiteList", defaultWhitelist(), CommonConfig::validateBlockName);
+        blackList = builder.comment("Blacklist of blocks that will not grow.").defineListAllowEmpty("blackList", defaultBlacklist(), CommonConfig::validateBlockName);
         onlySaplingsAndCrops = builder.comment("Only grow sapling tags and crop tags. (blacklist can exclude these)").define("onlySaplingsAndCrops", true);
         playerDistance = builder.comment("The distance from the player to check for growth in blocks. (N S E W)").defineInRange("playerDistance", 5, 1, 20);
-        sprintGrowthChance = builder.comment("The chance of growth applied by sprinting. (1 = 100%)").defineInRange("sprintGrowthChance", 0.075, 0, 1);
-        crouchGrowthChance = builder.comment("The chance of growth applied by crouching. (1 = 100%)").defineInRange("crouchGrowthChance", 0.15, 0, 1);
+        sprintGrowthChance = builder.comment("The chance of growth applied by sprinting. (1 = 100%)").defineInRange("sprintGrowthChance", 0.075, 0.0, 1.0);
+        crouchGrowthChance = builder.comment("The chance of growth applied by crouching. (1 = 100%)").defineInRange("crouchGrowthChance", 0.15, 0.0, 1.0);
     }
 
     private static List<String> defaultWhitelist() {
@@ -131,7 +140,11 @@ public class CommonConfig {
 
     private static List<String> defaultBlacklist() {
         return List.of(
-                "minecraft:grass_block", "minecraft:netherrack", "minecraft:grass_block", "minecraft:warped_nylium", "minecraft:crimson_nylium"
+                "minecraft:grass_block", "minecraft:netherrack", "minecraft:warped_nylium", "minecraft:crimson_nylium"
         );
+    }
+
+    private static boolean validateBlockName(final Object obj) {
+        return obj instanceof String blockName && BuiltInRegistries.BLOCK.containsKey(ResourceLocation.parse(blockName));
     }
 }
