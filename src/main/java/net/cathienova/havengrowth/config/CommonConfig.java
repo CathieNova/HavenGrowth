@@ -1,14 +1,10 @@
 package net.cathienova.havengrowth.config;
 
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.common.ModConfigSpec;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 public class CommonConfig {
     public static final Pair<CommonConfig, ModConfigSpec> SPEC_PAIR = new ModConfigSpec.Builder().configure(CommonConfig::new);
@@ -23,9 +19,6 @@ public class CommonConfig {
     public final ModConfigSpec.IntValue playerDistance;
     public final ModConfigSpec.DoubleValue sprintGrowthChance;
     public final ModConfigSpec.DoubleValue crouchGrowthChance;
-
-    public static Set<Block> validatedWhiteList;
-    public static Set<Block> validatedBlackList;
 
     public CommonConfig(ModConfigSpec.Builder builder) {
         showParticles = builder.comment("Enable growth particles").define("showParticles", true);
@@ -113,10 +106,10 @@ public class CommonConfig {
 
                 "integrateddynamics:menril_sapling",
 
-                "quark:acnient_sapling", "quark:blue_blossom_sapling", "quark:lavender_blossom_sapling",
+                "quark:ancient_sapling", "quark:blue_blossom_sapling", "quark:lavender_blossom_sapling",
                 "quark:orange_blossom_sapling", "quark:yellow_blossom_sapling", "quark:red_blossom_sapling",
 
-                "croptopia:artichoke_crop", "croptopia:asparagus_crop", "croptopia:bareley_crop", "croptopia:basil_crop",
+                "croptopia:artichoke_crop", "croptopia:asparagus_crop", "croptopia:barley_crop", "croptopia:basil_crop",
                 "croptopia:bellpepper_crop", "croptopia:blackbean_crop", "croptopia:blackberry_crop", "croptopia:blueberry_crop",
                 "croptopia:broccoli_crop", "croptopia:cabbage_crop", "croptopia:cantaloupe_crop", "croptopia:cauliflower_crop",
                 "croptopia:celery_crop", "croptopia:chile_pepper_crop", "croptopia:coffee_crop", "croptopia:corn_crop",
@@ -145,6 +138,11 @@ public class CommonConfig {
     }
 
     private static boolean validateBlockName(final Object obj) {
-        return obj instanceof String blockName && BuiltInRegistries.BLOCK.containsKey(ResourceLocation.parse(blockName));
+        if (!(obj instanceof String blockName)) {
+            return false;
+        }
+
+        String resourceName = blockName.startsWith("#") ? blockName.substring(1) : blockName;
+        return ResourceLocation.tryParse(resourceName) != null;
     }
 }

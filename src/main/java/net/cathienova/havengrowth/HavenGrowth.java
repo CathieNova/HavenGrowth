@@ -24,7 +24,6 @@ public class HavenGrowth
 
         modContainer.registerConfig(ModConfig.Type.COMMON, CommonConfig.SPEC);
 
-        NeoForge.EVENT_BUS.register(HavenGrowthEvent.class);
         NeoForge.EVENT_BUS.register(this);
     }
 

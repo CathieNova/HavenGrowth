@@ -2,9 +2,11 @@ package net.cathienova.havengrowth;
 
 import net.cathienova.havengrowth.config.CommonConfig;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.player.Player;
@@ -12,77 +14,75 @@ import net.minecraft.world.item.BoneMealItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.BonemealableBlock;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.BonemealableBlock;
 import net.minecraft.world.level.block.CropBlock;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.core.particles.ParticleTypes;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 @EventBusSubscriber(modid = HavenGrowth.MODID)
 public class HavenGrowthEvent {
-    // Maps to track player's crouching state
     private static final Map<UUID, Boolean> prevSneaking = new HashMap<>();
     private static final Map<UUID, Boolean> hasCrouched = new HashMap<>();
 
     @SubscribeEvent
     public static void onPlayerTick(PlayerTickEvent.Post event) {
-        //if (event.phase == TickEvent.PlayerTickEvent.Phase.START) {
-            Player player = event.getEntity();
-            UUID uuid = player.getUUID();
+        Player player = event.getEntity();
 
-            // Initialize player states if absent
-            prevSneaking.putIfAbsent(uuid, player.isCrouching());
-            hasCrouched.putIfAbsent(uuid, false);
+        if (player.level().isClientSide()) {
+            return;
+        }
 
-            handleMovementModes(player, uuid);
-        //}
+        UUID uuid = player.getUUID();
+        prevSneaking.putIfAbsent(uuid, player.isCrouching());
+        hasCrouched.putIfAbsent(uuid, false);
+        handleMovementModes(player, uuid);
+    }
+
+    @SubscribeEvent
+    public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
+        UUID uuid = event.getEntity().getUUID();
+        prevSneaking.remove(uuid);
+        hasCrouched.remove(uuid);
     }
 
     private static void handleMovementModes(Player player, UUID uuid) {
-        // Handle sprinting
         if (player.isSprinting() && !player.isCrouching()) {
             processPlantGrowth(player, CommonConfig.CONFIG.sprintGrowthChance.get());
-        }
-        // Handle crouching
-        else if (player.isCrouching() && !prevSneaking.get(uuid)) {
+        } else if (player.isCrouching() && !prevSneaking.get(uuid)) {
             if (!hasCrouched.get(uuid)) {
                 processPlantGrowth(player, CommonConfig.CONFIG.crouchGrowthChance.get());
-                hasCrouched.put(uuid, true); // Mark crouch as handled
+                hasCrouched.put(uuid, true);
             }
-        }
-        // Reset hasCrouched when player stops crouching
-        else if (!player.isCrouching()) {
+        } else if (!player.isCrouching()) {
             hasCrouched.put(uuid, false);
         }
 
-        // Update prevSneaking state
         prevSneaking.put(uuid, player.isCrouching());
     }
 
     private static void processPlantGrowth(Player player, double growthChance) {
-        // Find nearby blocks and attempt to grow plants
-        findNearbyBlocks(player).forEach(pos -> growPlants(player.level(), pos, growthChance, player));
-    }
-
-    private static List<BlockPos> findNearbyBlocks(Player player) {
-        List<BlockPos> nearbyBlocks = new ArrayList<>();
+        Level world = player.level();
         BlockPos playerPos = player.blockPosition();
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         int playerDistance = CommonConfig.CONFIG.playerDistance.get();
-        // Iterate over a cube of positions around the player
+
         for (int x = -playerDistance; x <= playerDistance; x++) {
             for (int y = -1; y <= 2; y++) {
                 for (int z = -playerDistance; z <= playerDistance; z++) {
-                    nearbyBlocks.add(playerPos.offset(x, y, z));
+                    pos.set(playerPos.getX() + x, playerPos.getY() + y, playerPos.getZ() + z);
+                    growPlants(world, pos, growthChance, player);
                 }
             }
         }
-        return nearbyBlocks;
     }
 
     private static void growPlants(Level world, BlockPos pos, double growthChance, Player player) {
@@ -101,10 +101,19 @@ public class HavenGrowthEvent {
     }
 
     private static boolean canGrow(BlockState state, double growthChance, Level world, BlockPos pos, Player player) {
-        if (isBlacklisted(state)) return false;
-        if (CommonConfig.CONFIG.useWhitelistOnly.get() && isWhitelisted(state)) return applyGrowth(world, state, pos, growthChance, player);
-        if (!CommonConfig.CONFIG.useWhitelistOnly.get()) return applyGrowth(world, state, pos, growthChance, player);
-        return false;
+        if (CommonConfig.CONFIG.useWhitelistOnly.get()) {
+            return isWhitelisted(state) && applyGrowth(world, state, pos, growthChance, player);
+        }
+
+        if (isBlacklisted(state)) {
+            return false;
+        }
+
+        if (CommonConfig.CONFIG.onlySaplingsAndCrops.get() && !state.is(BlockTags.CROPS) && !state.is(BlockTags.SAPLINGS)) {
+            return false;
+        }
+
+        return applyGrowth(world, state, pos, growthChance, player);
     }
 
     private static boolean isWhitelisted(BlockState state) {
@@ -147,8 +156,7 @@ public class HavenGrowthEvent {
             if (state.getBlock() instanceof CropBlock cropBlock) {
                 return growCrop(world, pos, cropBlock, state);
             } else if (state.getBlock() instanceof BonemealableBlock) {
-                BoneMealItem.applyBonemeal(new ItemStack(Items.BONE_MEAL), world, pos, player);
-                return true;
+                return BoneMealItem.applyBonemeal(new ItemStack(Items.BONE_MEAL), world, pos, player);
             }
         }
         return false;
@@ -164,15 +172,20 @@ public class HavenGrowthEvent {
     }
 
     private static void spawnGrowthParticles(Level world, BlockPos pos) {
-        double centerX = pos.getX() + 0.5;
-        double centerY = pos.getY() + 0.5;
-        double centerZ = pos.getZ() + 0.5;
-        Random random = new Random();
-        for (int i = 0; i < 5; i++) {
-            double offsetX = random.nextFloat() * 0.6 - 0.3;
-            double offsetY = random.nextFloat() * 0.6 - 0.3;
-            double offsetZ = random.nextFloat() * 0.6 - 0.3;
-            world.addParticle(ParticleTypes.HAPPY_VILLAGER, centerX + offsetX, centerY + offsetY, centerZ + offsetZ, 0.0D, 0.0D, 0.0D);
+        if (!(world instanceof ServerLevel serverLevel)) {
+            return;
         }
+
+        serverLevel.sendParticles(
+                ParticleTypes.HAPPY_VILLAGER,
+                pos.getX() + 0.5,
+                pos.getY() + 0.5,
+                pos.getZ() + 0.5,
+                5,
+                0.3,
+                0.3,
+                0.3,
+                0.0
+        );
     }
 }
