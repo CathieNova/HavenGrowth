@@ -5,7 +5,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.TagKey;
@@ -56,10 +56,10 @@ public class HavenGrowthEvent {
 
     private static void handleMovementModes(Player player, UUID uuid) {
         if (player.isSprinting() && !player.isCrouching()) {
-            processPlantGrowth(player, CommonConfig.CONFIG.sprintGrowthChance.get());
+            processPlantGrowth(player, CommonConfig.CONFIG.sprintGrowthChance.getAsDouble());
         } else if (player.isCrouching() && !prevSneaking.get(uuid)) {
             if (!hasCrouched.get(uuid)) {
-                processPlantGrowth(player, CommonConfig.CONFIG.crouchGrowthChance.get());
+                processPlantGrowth(player, CommonConfig.CONFIG.crouchGrowthChance.getAsDouble());
                 hasCrouched.put(uuid, true);
             }
         } else if (!player.isCrouching()) {
@@ -73,7 +73,7 @@ public class HavenGrowthEvent {
         Level world = player.level();
         BlockPos playerPos = player.blockPosition();
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
-        int playerDistance = CommonConfig.CONFIG.playerDistance.get();
+        int playerDistance = CommonConfig.CONFIG.playerDistance.getAsInt();
 
         for (int x = -playerDistance; x <= playerDistance; x++) {
             for (int y = -1; y <= 2; y++) {
@@ -90,7 +90,7 @@ public class HavenGrowthEvent {
         Block block = blockState.getBlock();
 
         if (block != Blocks.AIR && block != Blocks.WATER && block != Blocks.LAVA && isPlantGrowable(blockState)) {
-            if (canGrow(blockState, growthChance, world, pos, player) && CommonConfig.CONFIG.showParticles.get()) {
+            if (canGrow(blockState, growthChance, world, pos, player) && CommonConfig.CONFIG.showParticles.getAsBoolean()) {
                 spawnGrowthParticles(world, pos);
             }
         }
@@ -101,7 +101,7 @@ public class HavenGrowthEvent {
     }
 
     private static boolean canGrow(BlockState state, double growthChance, Level world, BlockPos pos, Player player) {
-        if (CommonConfig.CONFIG.useWhitelistOnly.get()) {
+        if (CommonConfig.CONFIG.useWhitelistOnly.getAsBoolean()) {
             return isWhitelisted(state) && applyGrowth(world, state, pos, growthChance, player);
         }
 
@@ -109,7 +109,7 @@ public class HavenGrowthEvent {
             return false;
         }
 
-        if (CommonConfig.CONFIG.onlySaplingsAndCrops.get() && !state.is(BlockTags.CROPS) && !state.is(BlockTags.SAPLINGS)) {
+        if (CommonConfig.CONFIG.onlySaplingsAndCrops.getAsBoolean() && !state.is(BlockTags.CROPS) && !state.is(BlockTags.SAPLINGS)) {
             return false;
         }
 
@@ -120,7 +120,7 @@ public class HavenGrowthEvent {
         String blockId = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
         for (String id : CommonConfig.CONFIG.whiteList.get()) {
             if (id.startsWith("#")) {
-                if (state.is(TagKey.create(Registries.BLOCK, ResourceLocation.parse(id.substring(1))))) {
+                if (state.is(TagKey.create(Registries.BLOCK, Identifier.parse(id.substring(1))))) {
                     return true;
                 }
             } else if (id.equals(blockId)) {
@@ -134,7 +134,7 @@ public class HavenGrowthEvent {
         String blockId = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
         for (String id : CommonConfig.CONFIG.blackList.get()) {
             if (id.startsWith("#")) {
-                if (state.is(TagKey.create(Registries.BLOCK, ResourceLocation.parse(id.substring(1))))) {
+                if (state.is(TagKey.create(Registries.BLOCK, Identifier.parse(id.substring(1))))) {
                     return true;
                 }
             } else if (id.equals(blockId)) {
@@ -152,7 +152,7 @@ public class HavenGrowthEvent {
             effectiveChance *= 2;
         }
 
-        if (world.random.nextFloat() <= effectiveChance) {
+        if (world.getRandom().nextFloat() <= effectiveChance) {
             if (state.getBlock() instanceof CropBlock cropBlock) {
                 return growCrop(world, pos, cropBlock, state);
             } else if (state.getBlock() instanceof BonemealableBlock) {

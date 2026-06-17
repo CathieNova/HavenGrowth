@@ -1,15 +1,13 @@
 package net.cathienova.havengrowth.config;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.common.ModConfigSpec;
-import org.apache.commons.lang3.tuple.Pair;
-
 import java.util.List;
 
 public class CommonConfig {
-    public static final Pair<CommonConfig, ModConfigSpec> SPEC_PAIR = new ModConfigSpec.Builder().configure(CommonConfig::new);
-    public static final CommonConfig CONFIG = SPEC_PAIR.getLeft();
-    public static final ModConfigSpec SPEC = SPEC_PAIR.getRight();
+    private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
+    public static final CommonConfig CONFIG = new CommonConfig(BUILDER);
+    public static final ModConfigSpec SPEC = BUILDER.build();
 
     public final ModConfigSpec.BooleanValue showParticles;
     public final ModConfigSpec.BooleanValue useWhitelistOnly;
@@ -23,8 +21,8 @@ public class CommonConfig {
     public CommonConfig(ModConfigSpec.Builder builder) {
         showParticles = builder.comment("Enable growth particles").define("showParticles", true);
         useWhitelistOnly = builder.comment("Use whitelist only. (will override blacklist and onlySaplingsAndCrops)").define("useWhitelistOnly", true);
-        whiteList = builder.comment("Whitelist of blocks that will grow.").defineListAllowEmpty("whiteList", defaultWhitelist(), CommonConfig::validateBlockName);
-        blackList = builder.comment("Blacklist of blocks that will not grow.").defineListAllowEmpty("blackList", defaultBlacklist(), CommonConfig::validateBlockName);
+        whiteList = builder.comment("Whitelist of blocks that will grow.").defineListAllowEmpty("whiteList", defaultWhitelist(), () -> "", CommonConfig::validateBlockName);
+        blackList = builder.comment("Blacklist of blocks that will not grow.").defineListAllowEmpty("blackList", defaultBlacklist(), () -> "", CommonConfig::validateBlockName);
         onlySaplingsAndCrops = builder.comment("Only grow sapling tags and crop tags. (blacklist can exclude these)").define("onlySaplingsAndCrops", true);
         playerDistance = builder.comment("The distance from the player to check for growth in blocks. (N S E W)").defineInRange("playerDistance", 5, 1, 20);
         sprintGrowthChance = builder.comment("The chance of growth applied by sprinting. (1 = 100%)").defineInRange("sprintGrowthChance", 0.075, 0.0, 1.0);
@@ -143,6 +141,11 @@ public class CommonConfig {
         }
 
         String resourceName = blockName.startsWith("#") ? blockName.substring(1) : blockName;
-        return ResourceLocation.tryParse(resourceName) != null;
+        try {
+            Identifier.parse(resourceName);
+            return true;
+        } catch (RuntimeException exception) {
+            return false;
+        }
     }
 }
